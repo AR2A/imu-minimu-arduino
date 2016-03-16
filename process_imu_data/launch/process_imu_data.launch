@@ -1,0 +1,5 @@
+<!--Start the communication with the IMU Sensor -->
+<!--ATTENTION: Before starting this node, make sure, that the port is correct!-->
+<launch>  
+	<node pkg="process_imu_data" type="process_imu_data_node" name="process_imu_data" />
+</launch>     
