@@ -42,6 +42,33 @@ Make sure that all dependencies listed above are installed before executing catk
 
 ## Basic Usage
 
+### Downloading the firmware to the arduino
+
+In order for the download to work modify the file "avr_imu/firmware/CMakeLists.txt" to suit your setup.
+
+        cmake_minimum_required(VERSION 2.8.3)
+        
+        include_directories(ros_lib arduino_libs)
+        
+        generate_arduino_firmware(avr_imu
+        	SRCS avr_imu.cpp arduino_libs/L3G/L3G.cpp arduino_libs/LSM303/LSM303.cpp ros_lib/time.cpp
+        	BOARD mega2560
+        	PORT /dev/ttyACM0
+        )
+
+Most likely the variables BOARD and PORT have to be modified.
+
+Afterwards you download the firmware by issuing the following commands inside your catkin workspace.
+
+        catkin_make avr_imu_firmware_avr_imu
+        catkin_make avr_imu_firmware_avr_imu-upload
+
+### Visualizing data with [rviz]
+
+For debugging purposes it can be useful to visualize the orientation within [rviz]. To do so install the imu_tools package which contains the [rviz_imu_plugin](http://wiki.ros.org/rviz_imu_plugin) package.
+
+        sudo apt-get install ros-indigo-imu-tools
+
 ## Nodes
 
 ### Node: avr_imu
