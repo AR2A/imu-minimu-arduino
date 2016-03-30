@@ -130,8 +130,6 @@ Please report bugs and request features using the [Issue Tracker](https://github
 
 [ROS]: http://www.ros.org
 [rviz]: http://wiki.ros.org/rviz
-[grid_map_msg/GridMap]: https://github.com/ethz-asl/grid_map/blob/master/grid_map_msg/msg/GridMap.msg
-[sensor_msgs/PointCloud2]: http://docs.ros.org/api/sensor_msgs/html/msg/PointCloud2.html
-[geometry_msgs/PoseWithCovarianceStamped]: http://docs.ros.org/api/geometry_msgs/html/msg/PoseWithCovarianceStamped.html
-[std_srvs/Empty]: http://docs.ros.org/api/std_srvs/html/srv/Empty.html
-[grid_map_msg/GetGridMap]: https://github.com/ethz-asl/grid_map/blob/master/grid_map_msg/srv/GetGridMap.srv
+[avr_imu/Imu]: https://github.com/AR2A/imu-minimu-arduino/blob/master/avr_imu/msg/Imu.msg
+[sensor_msgs/Imu]: http://docs.ros.org/api/sensor_msgs/html/msg/Imu.html
+[std_msgs/Empty]: http://docs.ros.org/api/std_msgs/html/msg/Empty.html
