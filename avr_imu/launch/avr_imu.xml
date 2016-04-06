@@ -1,8 +1,0 @@
-<!--Start the communication with the IMU Sensor -->
-<!--ATTENTION: Before starting this node, make sure, that the port is correct!-->
-<launch>  
-    <node pkg="rosserial_python" type="serial_node.py" name="avr_imu">
-     <param name="port" value="/dev/ttyACM0"/> 
-     <param name="baud" value="57600"/>
-    </node>
-</launch>     

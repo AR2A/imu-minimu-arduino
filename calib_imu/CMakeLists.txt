@@ -131,7 +131,7 @@ include_directories(
 # add_dependencies(process_imu_data ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
- add_executable(calib_imu_node src/main.cpp src/CalibrationGeneration.cpp ../process_imu_data/src/Sensor3DCalibration.cpp)
+ add_executable(calib_imu_node src/main.cpp src/CalibrationGenerator.cpp ../process_imu_data/src/Sensor3DCalibration.cpp)
 
 
 ## Add cmake target dependencies of the executable

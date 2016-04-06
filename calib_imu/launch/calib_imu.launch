@@ -1,5 +1,3 @@
-<!--Start the communication with the IMU Sensor -->
-<!--ATTENTION: Before starting this node, make sure, that the port is correct!-->
 <launch>  
 	<node pkg="calib_imu" type="calib_imu_node" name="calib_imu" />
 </launch>     
