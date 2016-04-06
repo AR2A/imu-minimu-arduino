@@ -320,7 +320,7 @@ bool CalibrationGenerator::isFinished() {
 
 //------------------------------------------------------------------------------------//
 
-void CalibrationGenerator::progressStep() {
+void CalibrationGenerator::doUserInput() {
     proceed = true;
 }
 

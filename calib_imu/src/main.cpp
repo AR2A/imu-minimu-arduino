@@ -80,9 +80,9 @@ arma::vec mag_vec(3,arma::fill::zeros); /**< Vector representation of one magnet
  * @brief Calculates the calibration data for the three sensors of the imu.
  */
 CalibrationGenerator cal_gen(
-    /*           Gyro zero position amplitude: */ 1.00, /* normalized */
+    /*   Magnetometer zero position amplitude: */ 1.00, /* normalized */
     /* Accelerometer zero position  amplitude: */ 9.81, /* m/s^2 */
-    /*  Magnetometer zero positiuon amplitude: */ 1.00);/* normalized */
+    /*          Gyro zero positiuon amplitude: */ 1.00);/* normalized */
 
 /**************************************************************************************
  * FUNCTIONS
