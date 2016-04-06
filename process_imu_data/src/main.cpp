@@ -1,6 +1,9 @@
 #include "ros/ros.h"
-#include "avr_imu/Imu.h"
-#include "sensor_msgs/Imu.h"
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/MagneticField.h>
 #include "tf/tf.h"
 #include <armadillo>
 #include "Sensor3DCalibration.h"
@@ -10,7 +13,15 @@
 
 using namespace std;
 
+/**************************************************************************************
+ * TYPES
+ **************************************************************************************/
+
+typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Imu ,sensor_msgs::MagneticField> SyncPolicy;
+typedef message_filters::Synchronizer<SyncPolicy> Synchronizer;
+
 string const path="./calibration";
+static size_t queue_length=5;
 
 
 Sensor3DCalibration acc_cal(path,"acc");
@@ -26,7 +37,7 @@ SensorFusion::FusedData data;
 
 SensorFusion kalman(path,1/50.0);
 
-void imuDataArrived(const avr_imu::Imu::ConstPtr& msg);
+void imuDataArrived(const sensor_msgs::Imu::ConstPtr& msgImu, const sensor_msgs::MagneticField::ConstPtr& msgMag);
 
 ros::Publisher imu_pub;
 
@@ -36,28 +47,36 @@ int main(int argc, char ** argv)
 ros::init(argc,argv,"process_imu_data");
 
 ros::NodeHandle nh;
-imu_pub=nh.advertise<sensor_msgs::Imu>("processed_imu_data", 100);
+imu_pub=nh.advertise<sensor_msgs::Imu>(ros::names::resolve("imu") + "/data", 5);
 
-ros::Subscriber sub = nh.subscribe ("raw_imu_data", 100, imuDataArrived);
+	message_filters::Subscriber<sensor_msgs::Imu> * subImuData = new message_filters::Subscriber<sensor_msgs::Imu>(nh,ros::names::resolve("imu") + "/data_raw", queue_length);
+	message_filters::Subscriber<sensor_msgs::MagneticField> * subMagData = new message_filters::Subscriber<sensor_msgs::MagneticField>(nh,ros::names::resolve("imu") + "/magnetic_field", queue_length);
 
-
+Synchronizer * sync = new Synchronizer(SyncPolicy(queue_length),*subImuData,*subMagData);
+sync->registerCallback(imuDataArrived);
 
 ros::spin();
 
 return 0;
 }
 
-void imuDataArrived(const avr_imu::Imu::ConstPtr& msg){
-	//Get data into vectors
-	acc_vec(0)=msg->linear_acceleration[0];
-	acc_vec(1)=msg->linear_acceleration[1];
-	acc_vec(2)=msg->linear_acceleration[2];
-	ang_vec(0)=msg->angular_velocity[0];
-	ang_vec(1)=msg->angular_velocity[1];
-	ang_vec(2)=msg->angular_velocity[2];
-	mag_vec(0)=msg->magnetic_field[0];
-	mag_vec(1)=msg->magnetic_field[1];
-	mag_vec(2)=msg->magnetic_field[2];
+void imuDataArrived(const sensor_msgs::Imu::ConstPtr& msgImu, const sensor_msgs::MagneticField::ConstPtr& msgMag)
+{
+sensor_msgs::Imu msgOut;
+
+  msgOut.header.stamp=ros::Time::now();//msgImu->header.stamp;
+  msgOut.header.frame_id = msgImu->header.frame_id;
+
+  //Get data into vectors
+  acc_vec(0) = msgImu->linear_acceleration.x;
+  acc_vec(1) = msgImu->linear_acceleration.y;
+  acc_vec(2) = msgImu->linear_acceleration.z;
+  ang_vec(0) = msgImu->angular_velocity.x;
+  ang_vec(1) = msgImu->angular_velocity.y;
+  ang_vec(2) = msgImu->angular_velocity.z;
+  mag_vec(0) = msgMag->magnetic_field.x;
+  mag_vec(1) = msgMag->magnetic_field.y;
+  mag_vec(2) = msgMag->magnetic_field.z;
 
 
 	//Calibrate each Vector (Sensitivity matrix contains unit conversion)
@@ -67,7 +86,7 @@ void imuDataArrived(const avr_imu::Imu::ConstPtr& msg){
 
 	data=kalman(ang_vec,acc_vec,mag_vec);
 	
-	sensor_msgs::Imu msgOut;
+
 	tf::Quaternion q;
 
 	//Rotation around XYZ (Roll/Pitch/Yaw)
@@ -85,36 +104,10 @@ void imuDataArrived(const avr_imu::Imu::ConstPtr& msg){
 	msgOut.linear_acceleration.y = acc_vec(1);
 	msgOut.angular_velocity.z = ang_vec(2);
 	msgOut.linear_acceleration.z = acc_vec(2);
-	msgOut.header.stamp=ros::Time::now();
-	msgOut.header.frame_id = "base_imu_link";
+	
+	
 	imu_pub.publish(msgOut);
 	ros::spinOnce();
-	//data.angles*=(180.0/(3.14159265));
-	
-	//data.angles.print("Angles: ");
-	
-
-	//Third Step: Compensation of tilt of magnetometer
-
-	//Fourth Step: Compensation of dynamic acceleration of accelerometer
-
-	//Fifth Step: Calculation of Roll/Pitch out of the g vector of the accelerometer
-
-	//Sixth Step: Calculation of Yaw out of the alignement to magnetic north of the magnetometer
-
-	//Seventh Step: Kalman Prediction with Gyro Data and Previous State estimation
-
-	//Eight Step: Kalman Update and Correction with Calculated Roll/Pitch/Yaw
-
-	//Ninth Step: Compensation of static acceleration of the accelerometer
-
-	//Tenth Step: Kalman Prediction with remaining dynamic acceleration
-
-	//Elevent Step: Kalman Update and Correction with Velocity Published by MotorDrivers
-
-	//Twelvth Step: Publish of current Orientation as tf::transform (with regard to fixed position relative to the robot frame)
-
-	//Thirteenth Step: Publish of current Velocity
 	
 
 }

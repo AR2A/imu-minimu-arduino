@@ -1,5 +1,5 @@
 /**
- * \author   Christian Breitwieser, BSc
+ * \author   CB
  * \brief    Main file for calibrating the Pololu MinIMU-9.
  * \file     main.cpp
  * \license  BSD-3-License
@@ -14,11 +14,14 @@
 #include <string>
 
 #include <ros/ros.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
 
-#include <std_msgs/Empty.h>
 #include <tf/tf.h>
 
-#include <avr_imu/Imu.h>
+#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/MagneticField.h>
 
 #include <armadillo>
 
@@ -28,17 +31,24 @@
 using namespace std;
 
 /**************************************************************************************
+ * TYPES
+ **************************************************************************************/
+
+typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Imu ,sensor_msgs::MagneticField> SyncPolicy;
+typedef message_filters::Synchronizer<SyncPolicy> Synchronizer;
+
+/**************************************************************************************
  * GLOBAL CONSTANTS
  **************************************************************************************/
 
 static string const PATH_TO_CALIBRATION = "./calibration";
+static size_t queue_length=5;
 
 /**************************************************************************************
  * PROTOTYPES
  **************************************************************************************/
 
-void imuDataArrived(const avr_imu::Imu::ConstPtr& msg);
-void advanceStatemachine(const std_msgs::Empty& msg);
+void imuDataArrived(const sensor_msgs::Imu::ConstPtr& msgImu, const sensor_msgs::MagneticField::ConstPtr& msgMag);
 
 /**************************************************************************************
  * GLOBAL VARIABLES
@@ -53,7 +63,6 @@ arma::vec ang_vec(3,arma::fill::zeros);
 arma::vec mag_vec(3,arma::fill::zeros);
 
 CalibrationGeneration calGen(1.0,9.81,1.0);
-ros::Publisher calib_finished_pub;
 
 /**************************************************************************************
  * FUNCTIONS
@@ -61,40 +70,36 @@ ros::Publisher calib_finished_pub;
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc,argv,"process_imu_data");
+  ros::init(argc,argv,"calib_imu");
 
   ros::NodeHandle nh;
-  
-  calib_finished_pub=nh.advertise<std_msgs::Empty>("processed_imu_data", 100);
 
-  ros::Subscriber sub = nh.subscribe ("raw_imu_data", 100, imuDataArrived);
-  ros::Subscriber sub1 = nh.subscribe ("imuCalibProceed", 100, advanceStatemachine);
-  
+	message_filters::Subscriber<sensor_msgs::Imu> * subImuData = new message_filters::Subscriber<sensor_msgs::Imu>(nh,ros::names::resolve("imu") + "/data_raw", queue_length);
+	message_filters::Subscriber<sensor_msgs::MagneticField> * subMagData = new message_filters::Subscriber<sensor_msgs::MagneticField>(nh,ros::names::resolve("imu") + "/magnetic_field", queue_length);
+
+	Synchronizer * sync = new Synchronizer(SyncPolicy(queue_length),*subImuData,*subMagData);
+	sync->registerCallback(imuDataArrived);
+	  
   ros::spin();
 
   return EXIT_SUCCESS;
 }
 
-void advanceStatemachine(const std_msgs::Empty& msg)
-{
-  calGen.progressStep();
-}
-
-void imuDataArrived(const avr_imu::Imu::ConstPtr& msg)
+void imuDataArrived(const sensor_msgs::Imu::ConstPtr& msgImu, const sensor_msgs::MagneticField::ConstPtr& msgMag)
 {
 
   static bool calibrated = false;
 
   //Get data into vectors
-  acc_vec(0) = msg->linear_acceleration[0];
-  acc_vec(1) = msg->linear_acceleration[1];
-  acc_vec(2) = msg->linear_acceleration[2];
-  ang_vec(0) = msg->angular_velocity[0];
-  ang_vec(1) = msg->angular_velocity[1];
-  ang_vec(2) = msg->angular_velocity[2];
-  mag_vec(0) = msg->magnetic_field[0];
-  mag_vec(1) = msg->magnetic_field[1];
-  mag_vec(2) = msg->magnetic_field[2];
+  acc_vec(0) = msgImu->linear_acceleration.x;
+  acc_vec(1) = msgImu->linear_acceleration.y;
+  acc_vec(2) = msgImu->linear_acceleration.z;
+  ang_vec(0) = msgImu->angular_velocity.x;
+  ang_vec(1) = msgImu->angular_velocity.y;
+  ang_vec(2) = msgImu->angular_velocity.z;
+  mag_vec(0) = msgMag->magnetic_field.x;
+  mag_vec(1) = msgMag->magnetic_field.y;
+  mag_vec(2) = msgMag->magnetic_field.z;
 
   if(!calibrated)
   {
@@ -102,12 +107,10 @@ void imuDataArrived(const avr_imu::Imu::ConstPtr& msg)
     
     if(calGen.isFinished())
     {
-      std_msgs::Empty msgOut;
       calGen.InitialiseCalibrationObjectMag(mag_cal);
       calGen.InitialiseCalibrationObjectAcc(acc_cal);
       calGen.InitialiseCalibrationObjectGyr(ang_cal);
       calibrated = true;
-      calib_finished_pub.publish(msgOut);
     }
   }
 }

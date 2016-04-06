@@ -81,9 +81,13 @@ This is the rosserial node running on the arduino board. The node reads the data
 
 #### Published Topics
 
-* **`raw_imu_data`** ([avr_imu/Imu])
+* **`/imu/data_raw`** ([sensor_msgs/Imu])
 
-    The raw register data of the imu.
+    The raw register data of the imu (accelerometer and gyroscope).
+	
+* **`/imu/magnetic_field`** ([sensor_msgs/MagneticField])
+
+	The raw register data of the imu (magnetometer).
 
 #### Services
 
@@ -99,13 +103,13 @@ This node executes a step by step calibration process to compensate the aligneme
 
 #### Subscribed Topics
 
-* **`raw_imu_data`** ([avr_imu/Imu])
+* **`/imu/data_raw`** ([sensor_msgs/Imu])
 
-    The raw register data of the imu.
-    
-* **`imuCalibProceed`** ([std_msgs/Empty])
+    The raw register data of the imu (accelerometer and gyroscope).
+	
+* **`/imu/magnetic_field`** ([sensor_msgs/MagneticField])
 
-    When received the calibration process proceeds.
+	The raw register data of the imu (magnetometer).
     
 #### Published Topics
 
@@ -132,13 +136,17 @@ attitude and heading reference system](http://www.sciencedirect.com/science/arti
 
 #### Subscribed Topics
 
-* **`raw_imu_data`** ([avr_imu/Imu])
+* **`/imu/data_raw`** ([sensor_msgs/Imu])
 
-    The raw register data of the imu.
+    The raw register data of the imu (accelerometer and gyroscope).
+	
+* **`/imu/magnetic_field`** ([sensor_msgs/MagneticField])
+
+	The raw register data of the imu (magnetometer).
 
 #### Published Topics
 
-* **`processed_imu_data`** ([sensor_msgs/Imu])
+* **`/imu/data`** ([sensor_msgs/Imu])
 
     The fused orientation data.
 
@@ -159,4 +167,5 @@ Please report bugs and request features using the [Issue Tracker](https://github
 [rviz]: http://wiki.ros.org/rviz
 [avr_imu/Imu]: https://github.com/AR2A/imu-minimu-arduino/blob/master/avr_imu/msg/Imu.msg
 [sensor_msgs/Imu]: http://docs.ros.org/api/sensor_msgs/html/msg/Imu.html
+[sensor_msgs/MagneticField]: http://docs.ros.org/api/sensor_msgs/html/msg/MagneticField.html
 [std_msgs/Empty]: http://docs.ros.org/api/std_msgs/html/msg/Empty.html
