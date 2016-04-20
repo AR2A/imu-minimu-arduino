@@ -19,7 +19,7 @@ using namespace arma;
 /**************************************************************************************
  * MACROS
  **************************************************************************************/
-
+//Macro used to calculate the absolute value of a vector
 #define abs_vec(_vec) (sqrt((_vec)(0)*(_vec)(0)+(_vec)(1)*(_vec)(1)+(_vec)(2)*(_vec)(2)))
 
 /**************************************************************************************
@@ -35,6 +35,8 @@ CalibrationGenerator::CalibrationGenerator(double norm_amplitude_mag,double norm
     acc.norm_amplitude=norm_amplitude_acc;
     gyr.norm_amplitude=norm_amplitude_gyr;
 
+	//Initialize calibration matrices with default values 
+	//Calibration with this values does the same as no calibration at all.
     mag.combined=mat(3,3,fill::eye);
     mag.bias=vec(3,fill::zeros);
     mag.sensitivity=vec(3,fill::zeros);
@@ -53,8 +55,12 @@ CalibrationGenerator::CalibrationGenerator(double norm_amplitude_mag,double norm
     gyr.orthogonalisation=vec(3,fill::zeros);
     gyr.alignement=vec(3,fill::zeros);
 
+	//The statemachine starts with the idle state set
     calState=st_IDLE;
+	//First command for the user
+	puts("Align Gravitation to positive z direction.");
 
+	//No user input till now
     proceed = false;
 }
 
@@ -67,18 +73,22 @@ CalibrationGenerator::~CalibrationGenerator() {
 
 void CalibrationGenerator::CalibrationStep(arma::vec const & input_mag,arma::vec const & input_acc,arma::vec const & input_gyr) {
 
-    char c;
-    bool keyPressed=false;
-    SolutionEntry accE;
+
+	SolutionEntry accE;
     SolutionEntry magE;
     SolutionEntry gyrE;
-
-    keyPressed=proceed;
+    bool advanceStatemachine=false;
+	
+	//If a user input has occured since the last step - advance the statemachine
+    advanceStatemachine=proceed;
     proceed=false;
+	
+	//The statemachine stores the measured values alongside the expected values according to the current state.
+	//After the final state a matrice coefficient is determined per sensor - which should convert measured values to the best possible estimation.
 
     switch(calState) {
     case st_IDLE:
-        if(keyPressed) {
+        if(advanceStatemachine) {
 
             calState=st_ZP;
         }
@@ -94,13 +104,13 @@ void CalibrationGenerator::CalibrationStep(arma::vec const & input_mag,arma::vec
         gyrE.Estimated=vec(3,fill::zeros);
         gyr_data.push_back(gyrE);
         acc_data.push_back(accE);
-        if(keyPressed) {
-            //puts("Align Gravitation to negative z direction.");
+        if(advanceStatemachine) {
+            puts("Align Gravitation to negative z direction.");
             calState=st_PAUSE1;
         }
         break;
     case st_PAUSE1:
-        if(keyPressed) {
+        if(advanceStatemachine) {
 
             calState=st_ZN;
         }
@@ -115,13 +125,13 @@ void CalibrationGenerator::CalibrationStep(arma::vec const & input_mag,arma::vec
         gyrE.Estimated=vec(3,fill::zeros);
         gyr_data.push_back(gyrE);
         acc_data.push_back(accE);
-        if(keyPressed) {
-            //puts("Align Gravitation to positive x direction.");
+        if(advanceStatemachine) {
+            puts("Align Gravitation to positive x direction.");
             calState=st_PAUSE2;
         }
         break;
     case st_PAUSE2:
-        if(keyPressed) {
+        if(advanceStatemachine) {
 
             calState=st_XP;
         }
@@ -136,13 +146,13 @@ void CalibrationGenerator::CalibrationStep(arma::vec const & input_mag,arma::vec
         gyrE.Estimated=vec(3,fill::zeros);
         gyr_data.push_back(gyrE);
         acc_data.push_back(accE);
-        if(keyPressed) {
-            //puts("Align Gravitation to negative x direction.");
+        if(advanceStatemachine) {
+            puts("Align Gravitation to negative x direction.");
             calState=st_PAUSE3;
         }
         break;
     case st_PAUSE3:
-        if(keyPressed) {
+        if(advanceStatemachine) {
 
             calState=st_XN;
         }
@@ -157,13 +167,13 @@ void CalibrationGenerator::CalibrationStep(arma::vec const & input_mag,arma::vec
         gyrE.Estimated=vec(3,fill::zeros);
         gyr_data.push_back(gyrE);
         acc_data.push_back(accE);
-        if(keyPressed) {
-            //puts("Align Gravitation to positive y direction.");
+        if(advanceStatemachine) {
+            puts("Align Gravitation to positive y direction.");
             calState=st_PAUSE4;
         }
         break;
     case st_PAUSE4:
-        if(keyPressed) {
+        if(advanceStatemachine) {
 
             calState=st_YP;
         }
@@ -178,13 +188,13 @@ void CalibrationGenerator::CalibrationStep(arma::vec const & input_mag,arma::vec
         gyrE.Estimated=vec(3,fill::zeros);
         gyr_data.push_back(gyrE);
         acc_data.push_back(accE);
-        if(keyPressed) {
-            //puts("Align Gravitation to negative y direction.");
+        if(advanceStatemachine) {
+            puts("Align Gravitation to negative y direction.");
             calState=st_PAUSE5;
         }
         break;
     case st_PAUSE5:
-        if(keyPressed) {
+        if(advanceStatemachine) {
 
             calState=st_YN;
         }
@@ -199,86 +209,30 @@ void CalibrationGenerator::CalibrationStep(arma::vec const & input_mag,arma::vec
         gyrE.Estimated=vec(3,fill::zeros);
         gyr_data.push_back(gyrE);
         acc_data.push_back(accE);
-        if(keyPressed) {
-            //puts("Turn the robot in a sphere.");
+        if(advanceStatemachine) {
+            puts("Turn the robot in a sphere.");
             calState=st_SPERE;
         }
         break;
     case st_SPERE:
         magE.Measured=input_mag;
         magE.Estimated=input_mag;
-        // Scale vector
+        // Stretch the ellipsoid to a sphere
         magE.Estimated=magE.Estimated*(mag.norm_amplitude/(abs_vec(magE.Estimated)));
         mag_data.push_back(magE);
-        if(keyPressed) {
-            for(size_t ind=0; ind<3; ind++) {
-                vec b(acc_data.size());
-                mat C(acc_data.size(), 4);
-
-                for(u32 i=0; i<acc_data.size(); ++i) {
-                    b(i)   = acc_data[i].Estimated(ind);
-
-                    C(i,0) = -1;
-                    C(i,1) = acc_data[i].Measured(0);
-                    C(i,2) = acc_data[i].Measured(1);
-                    C(i,3) = acc_data[i].Measured(2);
-                }
-
-                vec solution = solve(C,b);
-
-                acc.bias(ind)=solution(0);
-                acc.combined(ind,0)=solution(1);
-                acc.combined(ind,1)=solution(2);
-                acc.combined(ind,2)=solution(3);
-            }
-            for(size_t ind=0; ind<3; ind++) {
-                vec b(mag_data.size());
-                mat C(mag_data.size(), 4);
-
-                for(u32 i=0; i<mag_data.size(); ++i) {
-                    b(i)   = mag_data[i].Estimated(ind);
-
-                    C(i,0) = -1;
-                    C(i,1) = mag_data[i].Measured(0);
-                    C(i,2) = mag_data[i].Measured(1);
-                    C(i,3) = mag_data[i].Measured(2);
-                }
-
-                vec solution = solve(C,b);
-
-                mag.bias(ind)=solution(0);
-                mag.combined(ind,0)=solution(1);
-                mag.combined(ind,1)=solution(2);
-                mag.combined(ind,2)=solution(3);
-            }
-            for(size_t ind=0; ind<3; ind++) {
-                vec b(gyr_data.size());
-                mat C(gyr_data.size(), 4);
-
-                for(u32 i=0; i<gyr_data.size(); ++i) {
-                    b(i)   = gyr_data[i].Estimated(ind);
-
-                    C(i,0) = -1;
-                }
-
-                vec solution = solve(C,b);
-
-                gyr.bias(ind)=solution(0);
-                gyr.combined(0,0)=1;
-                gyr.combined(1,1)=1;
-                gyr.combined(2,2)=1;
-            }
-
+		
+        if(advanceStatemachine) {
+			//Before finishing do the math to calculate calibration data from aquired data
+			CalculateCombinedMatrixFromSolutionEntries();
             CalculateVectorsFromCombinedMatrix(gyr);
             CalculateVectorsFromCombinedMatrix(acc);
             CalculateVectorsFromCombinedMatrix(mag);
-
 
             calState=st_FINISHED;
         }
         break;
     case st_FINISHED:
-        if(keyPressed) {
+        if(advanceStatemachine) {
             calState=st_FINISHED;
         }
         break;
@@ -328,7 +282,82 @@ void CalibrationGenerator::doUserInput() {
  * PRIVATE FUNCTIONS
  **************************************************************************************/
 
+void CalibrationGenerator::CalculateCombinedMatrixFromSolutionEntries() {
+	
+	//The accelerometer data is fit to match the gravitational acceleration in all six alignements.
+	for(size_t ind=0; ind<3; ind++) {
+		vec b(acc_data.size());
+		mat C(acc_data.size(), 4);
+
+		for(u32 i=0; i<acc_data.size(); ++i) {
+			b(i)   = acc_data[i].Estimated(ind);
+
+			C(i,0) = -1;
+			C(i,1) = acc_data[i].Measured(0);
+			C(i,2) = acc_data[i].Measured(1);
+			C(i,3) = acc_data[i].Measured(2);
+		}
+
+		vec solution = solve(C,b);
+
+		acc.bias(ind)=solution(0);
+		acc.combined(ind,0)=solution(1);
+		acc.combined(ind,1)=solution(2);
+		acc.combined(ind,2)=solution(3);
+	}
+	
+	//For the magnetometer the aquired ellipsoid is fit to a sphere 
+	//Currently this is done by adjusting the amplitude of the mesured data to fit the unity sphere
+	//TODO: Implement a "better" algorithmn to fit the sphere
+	for(size_t ind=0; ind<3; ind++) {
+		vec b(mag_data.size());
+		mat C(mag_data.size(), 4);
+
+		for(u32 i=0; i<mag_data.size(); ++i) {
+			b(i)   = mag_data[i].Estimated(ind);
+
+			C(i,0) = -1;
+			C(i,1) = mag_data[i].Measured(0);
+			C(i,2) = mag_data[i].Measured(1);
+			C(i,3) = mag_data[i].Measured(2);
+		}
+
+		vec solution = solve(C,b);
+
+		mag.bias(ind)=solution(0);
+		mag.combined(ind,0)=solution(1);
+		mag.combined(ind,1)=solution(2);
+		mag.combined(ind,2)=solution(3);
+	}
+	
+	//For the gyroscope only bias values may be calculated from the aquired data
+	//Combined matrice is set to not affect the measured values -> identity matrice
+	for(size_t ind=0; ind<3; ind++) {
+		vec b(gyr_data.size());
+		mat C(gyr_data.size(), 4);
+
+		for(u32 i=0; i<gyr_data.size(); ++i) {
+			b(i)   = gyr_data[i].Estimated(ind);
+			C(i,0) = -1;
+		}
+
+		vec solution = solve(C,b);
+
+		gyr.bias(ind)=solution(0);
+		gyr.combined(0,0)=1;
+		gyr.combined(1,1)=1;
+		gyr.combined(2,2)=1;
+	}	
+}
+ 
+//------------------------------------------------------------------------------------//
+ 
 void CalibrationGenerator::CalculateVectorsFromCombinedMatrix(CalData & cal) {
+
+	//Do some math magic to solve the equation system (coefficient comparision):
+	//Combined_Matrice*(MeasuredDataVector-(Combined_Matrice^-1)*CombinedBias) = EstimatedDataVector
+	//(AlignementMatrice^-1)*(OrthogonalisationMatrice^-1)*(SensitivityMatrice^-1)*(MeasuredData-Bias)=EstimatedDataVector
+	//For the elements of the matrices see (http://www.sciencedirect.com/science/article/pii/S0924424707003834)
 
     cal.bias=inv(cal.combined)*cal.bias;
 

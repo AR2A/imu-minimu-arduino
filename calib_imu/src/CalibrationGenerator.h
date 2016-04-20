@@ -82,7 +82,7 @@ class CalibrationGenerator {
     void doUserInput();
   private:
   
-    bool proceed; /**< */
+    bool proceed; /**< Used by #doUserInput to advance the statemachine*/
 
     /**
      * A single dataset with measured data as well as expected data
@@ -92,9 +92,9 @@ class CalibrationGenerator {
         arma::vec Estimated;/**< corresponding expected data */
     };
 
-    std::vector<SolutionEntry> mag_data; /**< */
-    std::vector<SolutionEntry> acc_data; /**< */
-    std::vector<SolutionEntry> gyr_data; /**< */
+    std::vector<SolutionEntry> mag_data; /**< Magnetometer data to be aquired during the calibration */
+    std::vector<SolutionEntry> acc_data; /**< Accelerometer data to be aquired during the calibration*/
+    std::vector<SolutionEntry> gyr_data; /**< Gyroscope data to be aquired during the calibration    */
 
     /**
      * Used to store intermediate calibration data
@@ -109,28 +109,29 @@ class CalibrationGenerator {
     } mag, acc, gyr;
 
     /**
-     *
+     * States of the internal statemachine describing the different talignements during calibration
      */
     enum {
-        st_IDLE,	/**< */
-        st_ZP,		/**< */
-        st_PAUSE1,	/**< */
-        st_ZN,		/**< */
-        st_PAUSE2,	/**< */
-        st_XP,		/**< */
-        st_PAUSE3,	/**< */
-        st_XN,		/**< */
-        st_PAUSE4,	/**< */
-        st_YP,		/**< */
-        st_PAUSE5,	/**< */
-        st_YN,		/**< */
-        st_SPERE,	/**< */
-        st_FINISHED	/**< */
+        st_IDLE,	/**< No calibration ongoing */
+        st_ZP,		/**< Accelerometer aligned with the z axis parallel to the g vector*/
+        st_PAUSE1,	/**< Pause of calibration, for the user to change alignement*/
+        st_ZN,		/**< Accelerometer aligned with the z axis antiparallel to the g vector*/
+        st_PAUSE2,	/**< Pause of calibration, for the user to change alignement*/
+        st_XP,		/**< Accelerometer aligned with the x axis parallel to the g vector*/
+        st_PAUSE3,	/**< Pause of calibration, for the user to change alignement*/
+        st_XN,		/**< Accelerometer aligned with the x axis antiparallel to the g vector*/
+        st_PAUSE4,	/**< Pause of calibration, for the user to change alignement*/
+        st_YP,		/**< Accelerometer aligned with the y axis parallel to the g vector*/
+        st_PAUSE5,	/**< Pause of calibration, for the user to change alignement*/
+        st_YN,		/**< Accelerometer aligned with the y axis antiparallel to the g vector*/
+        st_SPERE,	/**< Magnetometer has to be slowly rotated around all axes*/
+        st_FINISHED	/**< All calibration steps are finished - result is calculated*/
     } calState;
 
+	void CalculateCombinedMatrixFromSolutionEntries();
     /**
-     * @brief
-     * @param[in] cal
+     * @brief Internal function to derive calibration parameters from combined matrix
+     * @param[inout] cal Calibration data structure containing a filled combined matrix - returned with all parameters filled
      */
     void CalculateVectorsFromCombinedMatrix(CalData & cal);
 };
