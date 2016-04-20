@@ -1,0 +1,11 @@
+<library path="lib/libcalib_imu">
+  <class name="calib_imu/calib_imu"
+         type="calib_imu::CalibPanel"
+         base_class_type="rviz::Panel">
+    <description>
+      A panel widget allowing calibration of an imu
+    </description>
+    <message_type>sensor_msgs/Imu</message_type>
+	<message_type>sensor_msgs/MagneticField</message_type>
+  </class>
+</library>

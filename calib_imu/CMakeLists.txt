@@ -5,10 +5,26 @@ project(calib_imu)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
-  avr_imu roscpp std_msgs rospy genmsg message_filters tf2 tf2_ros
+  avr_imu roscpp std_msgs rospy genmsg message_filters tf2 tf2_ros rviz
 )
 
 find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
+include(${QT_USE_FILE})
+
+add_definitions(-DQT_NO_KEYWORDS)
+
+qt4_wrap_cpp(MOC_FILES
+  src/CalibPanel.h
+)
+
+set(SOURCE_FILES
+  #src/main.cpp
+  src/CalibPanel.cpp
+  src/CalibrationGenerator.cpp
+  ../process_imu_data/src/Sensor3DCalibration.cpp
+  ${MOC_FILES}
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -104,7 +120,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES process_imu_data
   CATKIN_DEPENDS tf2_ros sensor_msgs message_filters roscpp
-  DEPENDS Boost
+  DEPENDS Boost Qt4
 )
 
 ###########
@@ -116,6 +132,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${Boost_INCLUDE_DIRS}
+  ${QT_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   /usr/includes/
 )
@@ -131,15 +148,16 @@ include_directories(
 # add_dependencies(process_imu_data ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
- add_executable(calib_imu_node src/main.cpp src/CalibrationGenerator.cpp ../process_imu_data/src/Sensor3DCalibration.cpp)
-
+ ##add_executable(calib_imu_node src/main.cpp src/CalibrationGenerator.cpp ../process_imu_data/src/Sensor3DCalibration.cpp)
+add_library(${PROJECT_NAME} ${SOURCE_FILES})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(process_imu_data_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(calib_imu_node
+ target_link_libraries(${PROJECT_NAME} 
+   ${QT_LIBRARIES}
    ${catkin_LIBRARIES}
    armadillo
  )
@@ -147,6 +165,21 @@ include_directories(
 #############
 ## Install ##
 #############
+
+install(TARGETS
+  ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(FILES 
+  plugin_description.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+install(DIRECTORY icons/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/icons)
+
 
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
