@@ -35,6 +35,7 @@
 
 #include "CalibrationGenerator.h"
 #include "../../process_imu_data/src/Sensor3DCalibration.h"
+#include "CalibPanel.h"
 
 using namespace std;
 using namespace arma;
@@ -96,14 +97,14 @@ void CalibPanel::setTopic( const QString& new_topic )
 // Save all configuration data from this panel to the given
 // Config object.  It is important here that you call save()
 // on the parent class so the class id and panel name get saved.
-void TeleopPanel::save( rviz::Config config ) const
+void CalibPanel::save( rviz::Config config ) const
 {
   rviz::Panel::save( config );
   config.mapSetValue( "Topic", read_topic );
 }
 
 // Load all configuration data for this panel from the given Config object.
-void TeleopPanel::load( const rviz::Config& config )
+void CalibPanel::load( const rviz::Config& config )
 {
   rviz::Panel::load( config );
   QString topic;
@@ -120,4 +121,4 @@ void TeleopPanel::load( const rviz::Config& config )
 // loadable by pluginlib::ClassLoader must have these two lines
 // compiled in its .cpp file, outside of any namespace scope.
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(rviz_plugin_tutorials::TeleopPanel,rviz::Panel )
+PLUGINLIB_EXPORT_CLASS(calib_imu::CalibPanel,rviz::Panel )
