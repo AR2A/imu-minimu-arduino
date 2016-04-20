@@ -1,20 +1,49 @@
+# Use ubuntu trusty (14.04) with sudo privileges.
+dist: trusty
+sudo: required
+language:
+  - generic
+cache:
+  - apt
+
+# Configuration variables. All variables are global now, but this can be used to
+# trigger a build matrix for different ROS distributions if desired.
+env:
+  global:
+    - ROS_DISTRO=indigo
+    - ROS_CI_DESKTOP="`lsb_release -cs`"  # e.g. [precise|trusty|...]
+    - CI_SOURCE_PATH=$(pwd)
+    - ROS_PARALLEL_JOBS='-j8 -l6'
+
 branches:
-  except:
-    - binary
+  only:
+    - master
+    - stable
 
 before_install:
-- sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 - sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net --recv-key 0xB01FA116
+- sudo add-apt-repository 'deb http://packages.ros.org/ros/ubuntu trusty main'
 - sudo apt-get update 
-- sudo apt-get install -y --no-install-recommends ros-indigo-ros-base ros-indigo-rosserial-arduino ros-indigo-rosserial cmake libopenblas-dev liblapack-dev libarpack-dev libarmadillo-dev libarmadillo5 libboost-all-dev build-essentials
+- sudo apt-get install -y --no-install-recommends python ros-indigo-ros-base ros-indigo-rosserial-arduino ros-indigo-rosserial cmake libopenblas-dev liblapack-dev libarpack2-dev libarmadillo-dev libarmadillo4 libboost-all-dev build-essential python-catkin-pkg python-rosdep python-wstool ros-indigo-catkin
+- source /opt/ros/indigo/setup.bash
 - sudo rosdep init
 - rosdep update
 
+install:
+  - mkdir -p ~/catkin_ws/src
+  - cd ~/catkin_ws/src
+  - catkin_init_workspace
+  # Create the devel/setup.bash (run catkin_make with an empty workspace) and
+  # source it to set the path variables.
+  - cd ~/catkin_ws
+  - catkin_make
+  - source devel/setup.bash
+  # Add the package under integration to the workspace using a symlink.
+  - cd ~/catkin_ws/src
+  - ln -s $CI_SOURCE_PATH .
+
 script:
-- bash .ci/build.sh > /dev/null
+  - cd ~/catkin_ws
+  - catkin_make
 
 after_success: 
-
-env:
-  global:
-  - secure: AAAAB3NzaC1yc2EAAAADAQABAAACAQCue5Tq4D/4fkLmuS8v2xnN1E1qqeOn5Y/0jS2ZnNbM8v2YCeU96wg5AljQXD836WOTdhvhRK+83fCg8cRQ5iDM52gb1mAaQ4m/7dZs//E81bKYN9e8xvepXj5564/ZpH+F5dlAxUFiBi1dAAJFr3C3PR0oSOBdeX08AUilTCjh9xauZefxTeOyMqzNzb52WxPXhShkkDv9W3Vf48gSmBLYbljwweZUpRFDXjpEb/iluAh4IHRTKfulRYqHlac5O6AGLxPr+K9qEwkcUenXln+c7OOBlMxoq03nLPIzL18YKBLr6Jk1UaWkYD8+P2NznbI8MkU6OIEkFJ3b5XAo/EsS17SQhBbZgEaybvd5JwsJ0jf9jo5NAqCHOmhWLs+8lbpHygqn1Cv6TGKyculZoKBSOLVK3xKaowUAqvjuBwn+xlKQ/Iogn/ZhFJbMDjoBuA6YRwafU6EMiQ6EfgTB6M4MxSwFzlLW1AhUdZlz8T7mcvAPl/KyDRTREb3lB/r1EngpyZ13vkh59OBMQG8wyI5zd+qSqGTLaduF60sF3xK5LeqN/krUWCjAdNNtFsNOuaEA/rmZuWUdvrtBlW5a/EBEv9xzz03LAq4LD7YDlR3ptCofzNURakGV8A1+v/U2GaLHLrEkvlFvu81/rwwwNyEVFwRLErNQwVApQ6+ZeykYTQ==
