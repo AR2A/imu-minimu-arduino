@@ -16,8 +16,9 @@ env:
     - ROS_PARALLEL_JOBS='-j8 -l6'
 
 branches:
-  except:
-    - binary
+  only:
+    - master
+    - stable
 
 before_install:
 - sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net --recv-key 0xB01FA116
