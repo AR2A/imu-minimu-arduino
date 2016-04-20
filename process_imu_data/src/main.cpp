@@ -44,6 +44,13 @@ static size_t const QUEUE_LENGTH=5;
  * PROTOTYPES
  **************************************************************************************/
 
+ /**
+ * @brief
+ * @param[in] msg_imu
+ * @param[in] msg_mag
+ *
+ * @return
+ */
 void imuDataArrived(const sensor_msgs::Imu::ConstPtr& msgImu, const sensor_msgs::MagneticField::ConstPtr& msgMag);
 
 /**************************************************************************************
@@ -60,7 +67,7 @@ arma::vec mag_vec(3,arma::fill::zeros);
 
 SensorFusion::FusedData data;
 
-SensorFusion kalman(path,1/50.0);
+SensorFusion kalman(PATH_TO_CALIBRATION,1/50.0);
 
 ros::Publisher imu_pub;
 
@@ -92,19 +99,12 @@ int main(int argc, char ** argv) {
     return 0;
 }
 
-/**
- * @brief
- * @param[in] msg_imu
- * @param[in] msg_mag
- *
- * @return
- */
 void imuDataArrived(const sensor_msgs::Imu::ConstPtr& msg_imu, const sensor_msgs::MagneticField::ConstPtr& msg_mag) {
     sensor_msgs::Imu msg_out;
     tf::Quaternion q;
 
-    msgOut.header.stamp=ros::Time::now();
-    msgOut.header.frame_id = msg_imu->header.frame_id;
+    msg_out.header.stamp=ros::Time::now();
+    msg_out.header.frame_id = msg_imu->header.frame_id;
 
     //Get data into vectors
     acc_vec(0) = msg_imu->linear_acceleration.x;
