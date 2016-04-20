@@ -10,7 +10,7 @@ before_install:
 - sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net --recv-key 0xB01FA116
 - sudo add-apt-repository 'deb http://packages.ros.org/ros/ubuntu trusty main'
 - sudo apt-get update 
-- sudo apt-get install -y --no-install-recommends ros-indigo-ros-base ros-indigo-rosserial-arduino ros-indigo-rosserial cmake libopenblas-dev liblapack-dev libarpack2-dev libarmadillo-dev libarmadillo4 libboost-all-dev build-essential
+- sudo apt-get install -y --no-install-recommends python ros-indigo-ros-base ros-indigo-rosserial-arduino ros-indigo-rosserial cmake libopenblas-dev liblapack-dev libarpack2-dev libarmadillo-dev libarmadillo4 libboost-all-dev build-essential
 - sudo rosdep init
 - rosdep update
 
