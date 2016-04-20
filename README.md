@@ -7,6 +7,9 @@ The ROS MiniImu Calibration and Sensor Fusion Packages are tested under ROS Indi
 
 **Affiliation: Advancements for Robotics in Rescue Applications, AR2A**
 
+##Travis Build Status
+[![Build Status](https://travis-ci.org/AR2A/imu_minimu-arduino.svg?branch=master)](https://travis-ci.org/AR2A/imu-minimu-arduino)
+
 ## Installation
 
 ### Dependencies
