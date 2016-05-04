@@ -31,7 +31,8 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
 
-#include <rviz/color.h>
+#include <rviz/helpers/color.h>
+#include <rviz/visualization_manager.h>
 
 
 #include <armadillo>
