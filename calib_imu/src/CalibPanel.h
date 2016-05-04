@@ -55,6 +55,16 @@ public:
   virtual void load( const rviz::Config& config );
   virtual void save( rviz::Config config ) const;
   virtual void onInitialize();
+  
+	/**
+	 * @brief Callback for received imu data.
+	 * Gets called every time new imu data arrives - the data is split in two messages
+	 * (one for gyro and accelerometer as well as one for magnetometer readings)
+	 *
+	 * @param[in] msg_imu Gyro/accelerometer readings
+	 * @param[in] msg_mag Magnetometer readings
+	 */
+	void imuDataArrived(const sensor_msgs::Imu::ConstPtr& msg_imu, const sensor_msgs::MagneticField::ConstPtr& msg_mag);
 
   // Next come a couple of public Qt slots.
 public Q_SLOTS:
@@ -84,6 +94,17 @@ protected:
   CalibDisplay * display;
   
   boost::shared_ptr<SubscriberWrapper> subscriber_;
+
+	// The ROS node handle.
+	ros::NodeHandle nh;
+	Sensor3DCalibration* acc_cal; /**< Container used for calibration data for the accelerometer */
+	Sensor3DCalibration* ang_cal; /**< Container used for calibration data for the gyro */
+	Sensor3DCalibration* mag_cal; /**< Container used for calibration data for the magnetometer */
+
+	/**
+	 * @brief Calculates the calibration data for the three sensors of the imu.
+	 */
+	CalibrationGenerator* cal_gen;
 
 
 };
