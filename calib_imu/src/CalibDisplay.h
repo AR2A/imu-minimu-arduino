@@ -16,8 +16,6 @@
 #include <ros/ros.h>
 #include <boost/circular_buffer.hpp>
 #include <rviz/message_filter_display.h>
-#include <sensor_msgs/Imu.h>
-#include <sensor_msgs/MagneticField.h>
 #endif
 
 namespace Ogre

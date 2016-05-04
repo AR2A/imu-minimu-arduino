@@ -8,13 +8,12 @@
 #include <rviz/properties/float_property.h>
 #include <rviz/properties/int_property.h>
 #include <rviz/frame_manager.h>
-#include <rviz/point_cloud.h>
+#include <rviz/ogre_helpers/point_cloud.h>
 #include <rviz/helpers/color.h>
 
 #include "CalibDisplay.h"
 
 using namespace std;
-using namespace arma;
 
 namespace calib_imu
 {
@@ -26,9 +25,9 @@ CalibDisplay::CalibDisplay()
 
 }
 
-void ImuDisplay::onInitialize()
+void CalibDisplay::onInitialize()
 {
-  MFDClass::onInitialize();
+  Display::onInitialize();
   visuals_.reset(new rviz::PointCloud());
   scene_node_->attachObject(visuals_.get());
 }
@@ -40,15 +39,15 @@ CalibDisplay::~CalibDisplay()
 // Clear the visuals by deleting their objects.
 void CalibDisplay::reset()
 {
-  MFDClass::reset();
-  visuals_.clear();
+  Display::reset();
+  visuals_->clear();
 
 }
 
 void CalibDisplay::DrawPoint(double x, double y, double z, rviz::Color color){
    rviz::PointCloud::Point * p =new rviz::PointCloud::Point();
    p->setColor(color.r_, color.g_, color.b_);
-   p->position = Vector3(x,y,z);
+   p->position = Ogre::Vector3(x,y,z);
    visuals_->addPoints(p,1);
 }
 

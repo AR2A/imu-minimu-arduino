@@ -42,11 +42,63 @@
 #include "CalibPanel.h"
 #include "CalibDisplay.h"
 
+/**************************************************************************************
+ * TYPES
+ **************************************************************************************/
+
+typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Imu ,sensor_msgs::MagneticField> SyncPolicy;
+typedef message_filters::Synchronizer<SyncPolicy> Synchronizer;
+
+/**************************************************************************************
+ * GLOBAL CONSTANTS
+ **************************************************************************************/
+
+/**
+ * @brief Path where the calibration matrices are stored.
+ * @todo Introduce a ros parameter to make this value configurable
+ */
+static string const PATH_TO_CALIBRATION = "./calibration";
+
+static size_t const QUEUE_LENGTH=5; /**< Length of the queues attached to the message buffers of subsrcibed messages*/
+
+
 using namespace std;
 using namespace arma;
 
 namespace calib_imu
 {
+	
+	class SubscriberWrapper {
+		public:
+		SubscriberWrapper(ros::NodeHandle & nh){
+
+			//Create the subscribers for both imu porovided messages
+			sub_imu_data =
+				new message_filters::Subscriber<sensor_msgs::Imu>(nh,ros::names::resolve("imu") + "/data_raw", QUEUE_LENGTH);
+				
+				sub_mag_data =
+			new message_filters::Subscriber<sensor_msgs::MagneticField>(nh,ros::names::resolve("imu") + "/magnetic_field", QUEUE_LENGTH);
+			
+			//Synchronize both messages to the same timebase (they should be sent by the imu at the 'same' time.)
+			sync = new Synchronizer(SyncPolicy(QUEUE_LENGTH),*sub_imu_data,*sub_mag_data);
+		}
+		
+		template<class C , typename T >
+		void registerCallback(C & 	callback, T * 	t ){
+			sync->registerCallback(callback,t);
+		}
+		
+		private:
+
+		
+		message_filters::Subscriber<sensor_msgs::Imu> * sub_imu_data;
+		message_filters::Subscriber<sensor_msgs::MagneticField> * sub_mag_data;
+		Synchronizer * sync;
+
+				
+	};
+	
+	
 	CalibPanel::CalibPanel( QWidget* parent )
   : rviz::Panel( parent )
 {
@@ -66,6 +118,53 @@ namespace calib_imu
 
   // Next we make signal/slot connections.
   connect( read_topic_editor, SIGNAL( editingFinished() ), this, SLOT( updateTopic() ));
+  
+  display=0;
+  
+	acc_cal=new Sensor3DCalibration(PATH_TO_CALIBRATION, "acc"); 
+	ang_cal=new Sensor3DCalibration(PATH_TO_CALIBRATION, "ang");
+	mag_cal=new Sensor3DCalibration(PATH_TO_CALIBRATION, "mag");
+	
+	cal_gen=new CalibrationGenerator(
+	/*   Magnetometer zero position amplitude: */ 1.00, /* normalized */
+	/* Accelerometer zero position  amplitude: */ 9.81, /* m/s^2 */
+	/*          Gyro zero position amplitude: */ 1.00);/* normalized */
+	
+}
+
+
+void CalibPanel::imuDataArrived(const sensor_msgs::Imu::ConstPtr& msg_imu, const sensor_msgs::MagneticField::ConstPtr& msg_mag){
+	arma::vec acc_vec(3,arma::fill::zeros); /**< Vector representation of one accelerometer reading */
+	arma::vec ang_vec(3,arma::fill::zeros); /**< Vector representation of one gyro reading */
+	arma::vec mag_vec(3,arma::fill::zeros); /**< Vector representation of one magnetometer reading */
+	
+	
+	//Convert the ros vector3 datatypes to a armadillo vector (the internally used math library)
+    acc_vec(0) = msg_imu->linear_acceleration.x;
+    acc_vec(1) = msg_imu->linear_acceleration.y;
+    acc_vec(2) = msg_imu->linear_acceleration.z;
+    ang_vec(0) = msg_imu->angular_velocity.x;
+    ang_vec(1) = msg_imu->angular_velocity.y;
+    ang_vec(2) = msg_imu->angular_velocity.z;
+    mag_vec(0) = msg_mag->magnetic_field.x;
+    mag_vec(1) = msg_mag->magnetic_field.y;
+    mag_vec(2) = msg_mag->magnetic_field.z;
+
+	if(display!=0){
+		display->DrawPoint(msg_mag->magnetic_field.x,msg_mag->magnetic_field.y,msg_mag->magnetic_field.z,rviz::Color(1.0,0.0,0.0));
+	}
+	
+    //Process the current dataset (calculate one step of the calibration)
+    cal_gen->CalibrationStep(mag_vec,acc_vec,ang_vec);
+
+    //When the calibration is finished store the calibration data to the working directory
+    //and finish. (Storing of the data is done by the Sensor3DCalibration objects).
+    if(cal_gen->isFinished()) {
+        cal_gen->InitialiseCalibrationObjectMag(*mag_cal);
+        cal_gen->InitialiseCalibrationObjectAcc(*acc_cal);
+        cal_gen->InitialiseCalibrationObjectGyr(*ang_cal);
+        cout << "Calibration finished!" << endl;
+    }
 }
 
 void CalibPanel::updateTopic()
@@ -100,8 +199,13 @@ void CalibPanel::setTopic( const QString& new_topic )
 }
 
 void CalibPanel::onInitialize(){
+	//Create a display for displaying the magnetometer values.
 	display=(CalibDisplay*)vis_manager_->createDisplay("calib_imu/calib_imu_visualization","CalibDisplay",true);
 	display->DrawPoint(5,5,5,rviz::Color(1.0,0.0,0.0));
+	//Initialize ros node
+	nh.setCallbackQueue(vis_manager_->getThreadedQueue ());
+	subscriber_.reset(new SubscriberWrapper(nh));
+	subscriber_->registerCallback(&CalibPanel::imuDataArrived,this);
 }
 
 // Save all configuration data from this panel to the given

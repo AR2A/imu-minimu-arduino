@@ -18,11 +18,13 @@
 # include <rviz/panel.h>
 #endif
 
+
 class QLineEdit;
 
 namespace calib_imu
 {
 class CalibDisplay;
+class SubscriberWrapper;
 
 // BEGIN_TUTORIAL
 // Here we declare our new subclass of rviz::Panel.  Every panel which
@@ -80,8 +82,8 @@ protected:
   QString read_topic;
 
   CalibDisplay * display;
-  // The ROS node handle.
-  ros::NodeHandle nh;
+  
+  boost::shared_ptr<SubscriberWrapper> subscriber_;
 
 
 };
