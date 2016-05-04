@@ -49,6 +49,7 @@ void CalibDisplay::DrawPoint(double x, double y, double z, rviz::Color color){
    p->setColor(color.r_, color.g_, color.b_);
    p->position = Ogre::Vector3(x,y,z);
    visuals_->addPoints(p,1);
+   visuals_->setRenderMode(rviz::PointCloud::RM_BOXES );
 }
 
 } // end namespace calib_imu

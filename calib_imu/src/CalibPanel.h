@@ -15,12 +15,16 @@
 #ifndef Q_MOC_RUN
 # include <ros/ros.h>
 
+#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/MagneticField.h>
+
 # include <rviz/panel.h>
 #endif
 
 
 class QLineEdit;
-
+class Sensor3DCalibration;
+class CalibrationGenerator;
 namespace calib_imu
 {
 class CalibDisplay;

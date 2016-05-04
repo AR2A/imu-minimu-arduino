@@ -309,26 +309,28 @@ void CalibrationGenerator::CalculateCombinedMatrixFromSolutionEntries() {
 	//For the magnetometer the aquired ellipsoid is fit to a sphere 
 	//Currently this is done by adjusting the amplitude of the mesured data to fit the unity sphere
 	//TODO: Implement a "better" algorithmn to fit the sphere
-	for(size_t ind=0; ind<3; ind++) {
-		vec b(mag_data.size());
-		mat C(mag_data.size(), 4);
+	//DONE: Now Ellipsoid fitting method by Yury Petrov.
+	vec b(mag_data.size());
+	mat C(mag_data.size(), 9);
 
-		for(u32 i=0; i<mag_data.size(); ++i) {
-			b(i)   = mag_data[i].Estimated(ind);
+	for(u32 i=0; i<mag_data.size(); ++i) {
+		b(i)   = 1;
 
-			C(i,0) = -1;
-			C(i,1) = mag_data[i].Measured(0);
-			C(i,2) = mag_data[i].Measured(1);
-			C(i,3) = mag_data[i].Measured(2);
-		}
-
-		vec solution = solve(C,b);
-
-		mag.bias(ind)=solution(0);
-		mag.combined(ind,0)=solution(1);
-		mag.combined(ind,1)=solution(2);
-		mag.combined(ind,2)=solution(3);
+		C(i,1) = mag_data[i].Measured(0)*mag_data[i].Measured(0);
+		C(i,2) = mag_data[i].Measured(1)*mag_data[i].Measured(1);
+		C(i,3) = mag_data[i].Measured(2)*mag_data[i].Measured(2);
+		C(i,4) = mag_data[i].Measured(0)*mag_data[i].Measured(1)*2.0;
+		C(i,5) = mag_data[i].Measured(0)*mag_data[i].Measured(2)*2.0;
+		C(i,6) = mag_data[i].Measured(1)*mag_data[i].Measured(2)*2.0;
+		C(i,7) = mag_data[i].Measured(0)*2.0;
+		C(i,8) = mag_data[i].Measured(1)*2.0;
+		C(i,9) = mag_data[i].Measured(2)*2.0;
 	}
+
+	vec solution = solve(C,b);
+	
+	//TODO: get mapping from ellipsoid to an sphere
+
 	
 	//For the gyroscope only bias values may be calculated from the aquired data
 	//Combined matrice is set to not affect the measured values -> identity matrice

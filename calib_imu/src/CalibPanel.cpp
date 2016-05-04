@@ -28,9 +28,6 @@
 
 #include <tf/tf.h>
 
-#include <sensor_msgs/Imu.h>
-#include <sensor_msgs/MagneticField.h>
-
 #include <rviz/helpers/color.h>
 #include <rviz/visualization_manager.h>
 
@@ -83,9 +80,8 @@ namespace calib_imu
 			sync = new Synchronizer(SyncPolicy(QUEUE_LENGTH),*sub_imu_data,*sub_mag_data);
 		}
 		
-		template<class C , typename T >
-		void registerCallback(C & 	callback, T * 	t ){
-			sync->registerCallback(callback,t);
+		Synchronizer * GetSynchronizer(){
+			return sync;
 		}
 		
 		private:
@@ -205,7 +201,7 @@ void CalibPanel::onInitialize(){
 	//Initialize ros node
 	nh.setCallbackQueue(vis_manager_->getThreadedQueue ());
 	subscriber_.reset(new SubscriberWrapper(nh));
-	subscriber_->registerCallback(&CalibPanel::imuDataArrived,this);
+	subscriber_->GetSynchronizer()->registerCallback(&CalibPanel::imuDataArrived,(CalibPanel*)this);
 }
 
 // Save all configuration data from this panel to the given
