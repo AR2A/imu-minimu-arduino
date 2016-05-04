@@ -100,7 +100,7 @@ void CalibPanel::setTopic( const QString& new_topic )
 }
 
 void CalibPanel::onInitialize(){
-	display=vis_manager_->createDisplay("calib_imu/calib_imu_visualization","CalibDisplay",true);
+	display=(CalibDisplay*)vis_manager_->createDisplay("calib_imu/calib_imu_visualization","CalibDisplay",true);
 	display->DrawPoint(5,5,5,rviz::Color(1.0,0.0,0.0));
 }
 
