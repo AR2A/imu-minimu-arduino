@@ -31,11 +31,15 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
 
+#include <rviz/color.h>
+
+
 #include <armadillo>
 
 #include "CalibrationGenerator.h"
 #include "../../process_imu_data/src/Sensor3DCalibration.h"
 #include "CalibPanel.h"
+#include "CalibDisplay.h"
 
 using namespace std;
 using namespace arma;
@@ -92,6 +96,11 @@ void CalibPanel::setTopic( const QString& new_topic )
     Q_EMIT configChanged();
   }
 
+}
+
+void CalibPanel::onInitialize(){
+	display=vis_manager_->createDisplay("calib_imu/calib_imu_visualization","CalibDisplay",true);
+	display->DrawPoint(5,5,5,rviz::Color(1.0,0.0,0.0));
 }
 
 // Save all configuration data from this panel to the given
