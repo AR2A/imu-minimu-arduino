@@ -16,11 +16,13 @@ add_definitions(-DQT_NO_KEYWORDS)
 
 qt4_wrap_cpp(MOC_FILES
   src/CalibPanel.h
+  src/CalibDisplay.h
 )
 
 set(SOURCE_FILES
   #src/main.cpp
   src/CalibPanel.cpp
+  src/CalibDisplay.cpp
   src/CalibrationGenerator.cpp
   ../process_imu_data/src/Sensor3DCalibration.cpp
   ${MOC_FILES}

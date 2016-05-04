@@ -9,7 +9,7 @@
 #include <rviz/properties/int_property.h>
 #include <rviz/frame_manager.h>
 #include <rviz/point_cloud.h>
-#include <rviz/color.h>
+#include <rviz/helpers/color.h>
 
 #include "CalibDisplay.h"
 
