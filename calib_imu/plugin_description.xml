@@ -12,9 +12,7 @@
          type="calib_imu::CalibDisplay"
          base_class_type="rviz::Display">
     <description>
-      A panel widget allowing to view the calibration process
+      A display allowing to view the calibration process of the magnetic field.
     </description>
-    <message_type>sensor_msgs/Imu</message_type>
-	<message_type>sensor_msgs/MagneticField</message_type>
   </class>
 </library>

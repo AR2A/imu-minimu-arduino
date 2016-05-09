@@ -39,6 +39,9 @@
 #include "CalibPanel.h"
 #include "CalibDisplay.h"
 
+using namespace std;
+using namespace arma;
+
 /**************************************************************************************
  * TYPES
  **************************************************************************************/
@@ -58,9 +61,6 @@ static string const PATH_TO_CALIBRATION = "./calibration";
 
 static size_t const QUEUE_LENGTH=5; /**< Length of the queues attached to the message buffers of subsrcibed messages*/
 
-
-using namespace std;
-using namespace arma;
 
 namespace calib_imu
 {
