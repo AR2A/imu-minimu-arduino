@@ -197,9 +197,8 @@ void CalibPanel::setTopic( const QString& new_topic )
 void CalibPanel::onInitialize(){
 	//Create a display for displaying the magnetometer values.
 	display=(CalibDisplay*)vis_manager_->createDisplay("calib_imu/calib_imu_visualization","CalibDisplay",true);
-	display->DrawPoint(5,5,5,rviz::Color(1.0,0.0,0.0));
 	//Initialize ros node
-	nh.setCallbackQueue(vis_manager_->getThreadedQueue ());
+	nh.setCallbackQueue(vis_manager_->getUpdateQueue ());
 	subscriber_.reset(new SubscriberWrapper(nh));
 	subscriber_->GetSynchronizer()->registerCallback(&CalibPanel::imuDataArrived,(CalibPanel*)this);
 }
