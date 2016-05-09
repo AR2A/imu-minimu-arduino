@@ -5,7 +5,7 @@ This is a [ROS] package developed to calibrate and fuse the orientation data pro
 
 The ROS MiniImu Calibration and Sensor Fusion Packages are tested under ROS Indigo and Ubuntu 14.04.
 
-**Affiliation: Advancements for Robotics in Rescue Applications, AR3A**
+**Affiliation: Advancements for Robotics in Rescue Applications, AR2A**
 
 ##Travis Build Status
 [![Build Status](https://travis-ci.org/AR2A/imu-minimu-arduino.svg?branch=master)](https://travis-ci.org/AR2A/imu-minimu-arduino)
