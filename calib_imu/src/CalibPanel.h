@@ -23,12 +23,14 @@
 
 
 class QLineEdit;
+class QPushButton;
 class Sensor3DCalibration;
 class CalibrationGenerator;
 namespace calib_imu
 {
 class CalibDisplay;
 class SubscriberWrapper;
+class CalibPanelPrivate;
 
 // BEGIN_TUTORIAL
 // Here we declare our new subclass of rviz::Panel.  Every panel which
@@ -86,11 +88,15 @@ protected Q_SLOTS:
   // setTopic() with the result.
   void updateTopic();
 
+  void proceedClicked(bool checked);
+
   // Then we finish up with protected member variables.
 protected:
 
   // One-line text editor for entering the outgoing ROS topic name.
   QLineEdit* read_topic_editor;
+
+QPushButton* btn_proceed;
 
   // The current name of the output topic.
   QString read_topic;
@@ -99,16 +105,18 @@ protected:
   
   boost::shared_ptr<SubscriberWrapper> subscriber_;
 
-	// The ROS node handle.
-	ros::NodeHandle nh;
-	Sensor3DCalibration* acc_cal; /**< Container used for calibration data for the accelerometer */
-	Sensor3DCalibration* ang_cal; /**< Container used for calibration data for the gyro */
-	Sensor3DCalibration* mag_cal; /**< Container used for calibration data for the magnetometer */
+// The ROS node handle.
+ros::NodeHandle nh;
+Sensor3DCalibration* acc_cal; /**< Container used for calibration data for the accelerometer */
+Sensor3DCalibration* ang_cal; /**< Container used for calibration data for the gyro */
+Sensor3DCalibration* mag_cal; /**< Container used for calibration data for the magnetometer */
 
-	/**
-	 * @brief Calculates the calibration data for the three sensors of the imu.
-	 */
-	CalibrationGenerator* cal_gen;
+/**
+ * @brief Calculates the calibration data for the three sensors of the imu.
+ */
+CalibrationGenerator* cal_gen;
+
+CalibPanelPrivate * d;
 
 
 };

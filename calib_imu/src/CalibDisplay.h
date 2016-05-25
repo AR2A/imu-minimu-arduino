@@ -16,6 +16,8 @@
 #include <ros/ros.h>
 #include <boost/circular_buffer.hpp>
 #include <rviz/message_filter_display.h>
+
+#include <armadillo>
 #endif
 
 namespace Ogre
@@ -59,6 +61,8 @@ public:
   virtual ~CalibDisplay();
   
   void DrawPoint(double x, double y, double z, rviz::Color color);
+
+  void DrawPlane(arma::vec normal, arma::vec center); 
 
 protected:
   virtual void onInitialize();

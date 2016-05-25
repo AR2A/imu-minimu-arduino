@@ -21,6 +21,15 @@
 /**************************************************************************************
  * CLASSES
  **************************************************************************************/
+class ImuData {
+public:
+arma::vec Magnetometer;
+arma::vec Accelerometer;
+arma::vec Gyroscope;
+};
+
+typedef std::vector<ImuData> ImuDataset;
+
 /**
  * @brief This class is responsible to calculate the calibration matrices for an imu.
  *	Calculation is achieved with a statemachine which instructs the user to align the 
@@ -80,10 +89,16 @@ class CalibrationGenerator {
      * @brief Is an indication for the internal statemachine that the user changed the orientation of the imu
      */
     void doUserInput();
+
+	arma::vec GetMagCentroid(ImuDataset & set);
+	arma::vec GetMagPlaneNormal(ImuDataset & set);
+	arma::vec GetAccVector(ImuDataset & set);
+	void CalculateMagnetometerCalibrationData(ImuDataset & set);
+	void CalculateAccelerometerCalibrationData(arma::vec zp, arma::vec zn, arma::vec xp, arma::vec xn, arma::vec yp, arma::vec yn);
   private:
   
     bool proceed; /**< Used by #doUserInput to advance the statemachine*/
-
+    double DataScaleForCalculations;
     /**
      * A single dataset with measured data as well as expected data
      */

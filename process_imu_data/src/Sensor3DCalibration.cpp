@@ -112,13 +112,13 @@ void Sensor3DCalibration::SetAlignementValues(arma::vec const & alignement) {
 
     rotPitch(0,0)=cos(alignement(1));
     rotPitch(2,0)=sin(alignement(1));
-    rotPitch(0,2)=-rotRoll(2,0);
-    rotPitch(2,2)=rotRoll(0,0);
+    rotPitch(0,2)=-rotPitch(2,0);
+    rotPitch(2,2)=rotPitch(0,0);
 
     rotYaw(0,0)=cos(alignement(2));
     rotYaw(0,1)=sin(alignement(2));
-    rotYaw(1,0)=-rotRoll(0,1);
-    rotYaw(1,1)=rotRoll(0,0);
+    rotYaw(1,0)=-rotYaw(0,1);
+    rotYaw(1,1)=rotYaw(0,0);
 
     m_AlignementMatrix=rotRoll*rotPitch*rotYaw;
 
