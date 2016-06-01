@@ -19,6 +19,7 @@
 #include <QPainter>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QMessageBox>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -67,19 +68,30 @@ static size_t const QUEUE_LENGTH=5; /**< Length of the queues attached to the me
 namespace calib_imu
 {
 	
+/**************************************************************************************
+ * INTERNAL CLASSES
+ **************************************************************************************/
+
 	class SubscriberWrapper {
 		public:
-		SubscriberWrapper(ros::NodeHandle & nh){
+		SubscriberWrapper(ros::NodeHandle & nh, std::string  topic){
 
 			//Create the subscribers for both imu porovided messages
 			sub_imu_data =
-				new message_filters::Subscriber<sensor_msgs::Imu>(nh,ros::names::resolve("imu") + "/data_raw", QUEUE_LENGTH);
+				new message_filters::Subscriber<sensor_msgs::Imu>(nh,ros::names::resolve(topic) + "/data_raw", QUEUE_LENGTH);
 				
 				sub_mag_data =
-			new message_filters::Subscriber<sensor_msgs::MagneticField>(nh,ros::names::resolve("imu") + "/magnetic_field", QUEUE_LENGTH);
+			new message_filters::Subscriber<sensor_msgs::MagneticField>(nh,ros::names::resolve(topic) + "/magnetic_field", QUEUE_LENGTH);
 			
 			//Synchronize both messages to the same timebase (they should be sent by the imu at the 'same' time.)
 			sync = new Synchronizer(SyncPolicy(QUEUE_LENGTH),*sub_imu_data,*sub_mag_data);
+		}
+
+		~SubscriberWrapper(){
+			delete sync;
+			delete sub_mag_data;
+			delete sub_imu_data;
+
 		}
 		
 		Synchronizer * GetSynchronizer(){
@@ -88,7 +100,6 @@ namespace calib_imu
 		
 		private:
 
-		
 		message_filters::Subscriber<sensor_msgs::Imu> * sub_imu_data;
 		message_filters::Subscriber<sensor_msgs::MagneticField> * sub_mag_data;
 		Synchronizer * sync;
@@ -96,7 +107,7 @@ namespace calib_imu
 				
 	};
 	
-
+//------------------------------------------------------------------------------------//
 
 	class CalibPanelPrivate {
 	public:	
@@ -121,9 +132,10 @@ namespace calib_imu
 			nYPlane,
 			Sphere
 		} CalibState,PreviousState;
-
 	};
-
+/**************************************************************************************
+ * PUBLIC FUNCTIONS
+ **************************************************************************************/
 	
 	CalibPanel::CalibPanel( QWidget* parent )
   : rviz::Panel( parent )
@@ -132,12 +144,10 @@ namespace calib_imu
   // QLabel and a QLineEdit in a QHBoxLayout.
   QHBoxLayout* topic_layout = new QHBoxLayout;
   topic_layout->addWidget( new QLabel( "Read Topic:" ));
-  read_topic_editor = new QLineEdit;
+  read_topic_editor = new QLineEdit("imu");
   btn_proceed = new QPushButton("Record positive Z-Plane",this);
 
   topic_layout->addWidget( read_topic_editor );
-
-
 
   // Lay out the topic field above the control widget.
   QVBoxLayout* layout = new QVBoxLayout;
@@ -171,6 +181,16 @@ layout->addWidget( btn_proceed );
 	
 }
 
+//------------------------------------------------------------------------------------//
+CalibPanel::~CalibPanel() {
+	delete cal_gen;
+	delete mag_cal;
+	delete ang_cal;
+	delete acc_cal;
+	delete d;
+}
+
+//------------------------------------------------------------------------------------//
 
 void CalibPanel::imuDataArrived(const sensor_msgs::Imu::ConstPtr& msg_imu, const sensor_msgs::MagneticField::ConstPtr& msg_mag){
 	arma::vec acc_vec(3,arma::fill::zeros); /**< Vector representation of one accelerometer reading */
@@ -212,23 +232,16 @@ void CalibPanel::imuDataArrived(const sensor_msgs::Imu::ConstPtr& msg_imu, const
 		d->currentDataset.push_back(data);
 	}
 
-    //Process the current dataset (calculate one step of the calibration)
-    cal_gen->CalibrationStep(mag_vec,acc_vec,ang_vec);
-
-    //When the calibration is finished store the calibration data to the working directory
-    //and finish. (Storing of the data is done by the Sensor3DCalibration objects).
-    if(cal_gen->isFinished()) {
-        cal_gen->InitialiseCalibrationObjectMag(*mag_cal);
-        cal_gen->InitialiseCalibrationObjectAcc(*acc_cal);
-        cal_gen->InitialiseCalibrationObjectGyr(*ang_cal);
-        cout << "Calibration finished!" << endl;
-    }
 }
+
+//------------------------------------------------------------------------------------//
 
 void CalibPanel::updateTopic()
 {
   setTopic( read_topic_editor->text() );
 }
+
+//------------------------------------------------------------------------------------//
 
 void CalibPanel::proceedClicked(bool checked){
 	static arma::vec zp,zn,xp,xn,yp,yn;
@@ -286,13 +299,13 @@ void CalibPanel::proceedClicked(bool checked){
 					break;
 				case CalibPanelPrivate::Sphere:
 					d->CalibState=CalibPanelPrivate::Idle;
+					display->Clear();
 					break;
 				}
 				btn_proceed->setText("Finish Step");
 				d->PreviousState=CalibPanelPrivate::Idle;
 					
 					d->displayMagnetometer.scale=2300;
-	
 
 					d->displayAccelerometer.scale=2300;
 
@@ -373,6 +386,13 @@ void CalibPanel::proceedClicked(bool checked){
 
 				cal_gen->InitialiseCalibrationObjectAcc(*acc_cal);
 				cal_gen->InitialiseCalibrationObjectMag(*mag_cal);
+				{
+				arma::vec temp(3,arma::fill::zeros);
+					temp(0)=6548.0890872094081;
+					temp(1)=6548.0890872094081;
+					temp(2)=6548.0890872094081;
+				ang_cal->SetSensitivityValues(temp);
+				}
 				arma::vec calib;
 				d->displayMagnetometer.color = rviz::Color(0.0,0.0,1.0);
 				for(size_t i=0;i<d->currentDataset.size();i++){
@@ -380,47 +400,44 @@ void CalibPanel::proceedClicked(bool checked){
 					calib=(*mag_cal)(d->currentDataset[i].Magnetometer);
 					display->DrawPoint(calib(0),calib(1),calib(2),d->displayMagnetometer.color);
 				}
+				QMessageBox msgBox;
+				msgBox.setText("The imu is calibrated calibration data is found in the current working directory (./calibration) ");
+				msgBox.exec();
 				break;
 	}
-
-
-
 }
+
+//------------------------------------------------------------------------------------//
 	
 void CalibPanel::setTopic( const QString& new_topic )
 {
-  // Only take action if the name has changed.
+
   if( new_topic != read_topic )
   {
     read_topic = new_topic;
-    // If the topic is the empty string, don't publish anything.
     if( read_topic == "" )
     {
-      //
+      read_topic="imu";
     }
-    else
-    {
-	  //
-    }
-    // rviz::Panel defines the configChanged() signal.  Emitting it
-    // tells RViz that something in this panel has changed that will
-    // affect a saved config file.  Ultimately this signal can cause
-    // QWidget::setWindowModified(true) to be called on the top-level
-    // rviz::VisualizationFrame, which causes a little asterisk ("*")
-    // to show in the window's title bar indicating unsaved changes.
+    subscriber_.reset(new SubscriberWrapper(nh,read_topic.toStdString()));
+    subscriber_->GetSynchronizer()->registerCallback(&CalibPanel::imuDataArrived,(CalibPanel*)this);
     Q_EMIT configChanged();
   }
 
 }
+
+//------------------------------------------------------------------------------------//
 
 void CalibPanel::onInitialize(){
 	//Create a display for displaying the magnetometer values.
 	display=(CalibDisplay*)vis_manager_->createDisplay("calib_imu/calib_imu_visualization","CalibDisplay",true);
 	//Initialize ros node
 	nh.setCallbackQueue(vis_manager_->getUpdateQueue ());
-	subscriber_.reset(new SubscriberWrapper(nh));
+	subscriber_.reset(new SubscriberWrapper(nh,"imu"));
 	subscriber_->GetSynchronizer()->registerCallback(&CalibPanel::imuDataArrived,(CalibPanel*)this);
 }
+
+//------------------------------------------------------------------------------------//
 
 // Save all configuration data from this panel to the given
 // Config object.  It is important here that you call save()
@@ -430,6 +447,8 @@ void CalibPanel::save( rviz::Config config ) const
   rviz::Panel::save( config );
   config.mapSetValue( "Topic", read_topic );
 }
+
+//------------------------------------------------------------------------------------//
 
 // Load all configuration data for this panel from the given Config object.
 void CalibPanel::load( const rviz::Config& config )
@@ -442,8 +461,14 @@ void CalibPanel::load( const rviz::Config& config )
     updateTopic();
   }
 }
+
+//------------------------------------------------------------------------------------//
 	
 } // end namespace calib_imu
+
+/**************************************************************************************
+ * REGISTER RVIZ PLUGIN
+ **************************************************************************************/
 
 // Tell pluginlib about this class.  Every class which should be
 // loadable by pluginlib::ClassLoader must have these two lines

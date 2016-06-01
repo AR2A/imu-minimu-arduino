@@ -55,14 +55,6 @@ class CalibrationGenerator {
     virtual ~CalibrationGenerator();
 
     /**
-     * @brief Perfors a single step of the calibration calculation
-     * @param[in] input_mag Raw magnetometer reading
-     * @param[in] input_acc Raw accelerometer reading
-     * @param[in] input_gyr Raw gyroscope reading
-     */
-    void CalibrationStep(arma::vec const & input_mag,arma::vec const & input_acc,arma::vec const & input_gyr);
-
-    /**
      * @brief Writes the calculated calibration data for the magnetometer to an calibration object. 
      * @param[in] cal The calibration object which shall store the data
      */
@@ -80,36 +72,24 @@ class CalibrationGenerator {
      */
     void InitialiseCalibrationObjectGyr(Sensor3DCalibration & cal);
 
-    /**
-     * @brief Indicates whether the calculation of calibration data has finished
-     */
-    bool isFinished();
 
-    /**
-     * @brief Is an indication for the internal statemachine that the user changed the orientation of the imu
-     */
-    void doUserInput();
 
 	arma::vec GetMagCentroid(ImuDataset & set);
 	arma::vec GetMagPlaneNormal(ImuDataset & set);
 	arma::vec GetAccVector(ImuDataset & set);
+	    /**
+	     * @brief calculates the calibration factors from a dataset containing rotations around all axes(sphere) 
+	     */
 	void CalculateMagnetometerCalibrationData(ImuDataset & set);
+	    /**
+	     * @brief calculates the calibration factors from six vectors describing the coordinate system
+	     */
 	void CalculateAccelerometerCalibrationData(arma::vec zp, arma::vec zn, arma::vec xp, arma::vec xn, arma::vec yp, arma::vec yn);
+	void CalculateGyrosocpeCalibrationData(ImuDataset & set);
   private:
   
-    bool proceed; /**< Used by #doUserInput to advance the statemachine*/
     double DataScaleForCalculations;
-    /**
-     * A single dataset with measured data as well as expected data
-     */
-    struct SolutionEntry {
-        arma::vec Measured; /**< measured data from one sensor*/
-        arma::vec Estimated;/**< corresponding expected data */
-    };
 
-    std::vector<SolutionEntry> mag_data; /**< Magnetometer data to be aquired during the calibration */
-    std::vector<SolutionEntry> acc_data; /**< Accelerometer data to be aquired during the calibration*/
-    std::vector<SolutionEntry> gyr_data; /**< Gyroscope data to be aquired during the calibration    */
 
     /**
      * Used to store intermediate calibration data
@@ -123,27 +103,6 @@ class CalibrationGenerator {
         arma::vec alignement;        /**< alignement vector (alignement of whole sensor) - derived from combined matrix*/
     } mag, acc, gyr;
 
-    /**
-     * States of the internal statemachine describing the different talignements during calibration
-     */
-    enum {
-        st_IDLE,	/**< No calibration ongoing */
-        st_ZP,		/**< Accelerometer aligned with the z axis parallel to the g vector*/
-        st_PAUSE1,	/**< Pause of calibration, for the user to change alignement*/
-        st_ZN,		/**< Accelerometer aligned with the z axis antiparallel to the g vector*/
-        st_PAUSE2,	/**< Pause of calibration, for the user to change alignement*/
-        st_XP,		/**< Accelerometer aligned with the x axis parallel to the g vector*/
-        st_PAUSE3,	/**< Pause of calibration, for the user to change alignement*/
-        st_XN,		/**< Accelerometer aligned with the x axis antiparallel to the g vector*/
-        st_PAUSE4,	/**< Pause of calibration, for the user to change alignement*/
-        st_YP,		/**< Accelerometer aligned with the y axis parallel to the g vector*/
-        st_PAUSE5,	/**< Pause of calibration, for the user to change alignement*/
-        st_YN,		/**< Accelerometer aligned with the y axis antiparallel to the g vector*/
-        st_SPERE,	/**< Magnetometer has to be slowly rotated around all axes*/
-        st_FINISHED	/**< All calibration steps are finished - result is calculated*/
-    } calState;
-
-	void CalculateCombinedMatrixFromSolutionEntries();
     /**
      * @brief Internal function to derive calibration parameters from combined matrix
      * @param[inout] cal Calibration data structure containing a filled combined matrix - returned with all parameters filled

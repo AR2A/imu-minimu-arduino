@@ -63,6 +63,7 @@ public:
   void DrawPoint(double x, double y, double z, rviz::Color color);
 
   void DrawPlane(arma::vec normal, arma::vec center); 
+void Clear();
 
 protected:
   virtual void onInitialize();

@@ -54,7 +54,7 @@ public:
   // someone using the class for something else to pass in a parent
   // widget as they normally would with Qt.
   CalibPanel( QWidget* parent = 0 );
-
+  ~CalibPanel();
   // Now we declare overrides of rviz::Panel functions for saving and
   // loading data from the config file.  Here the data is the
   // topic name.
