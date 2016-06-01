@@ -22,17 +22,17 @@
  * CLASSES
  **************************************************************************************/
 class ImuData {
-public:
-arma::vec Magnetometer;
-arma::vec Accelerometer;
-arma::vec Gyroscope;
+  public:
+    arma::vec Magnetometer;
+    arma::vec Accelerometer;
+    arma::vec Gyroscope;
 };
 
 typedef std::vector<ImuData> ImuDataset;
 
 /**
  * @brief This class is responsible to calculate the calibration matrices for an imu.
- *	Calculation is achieved with a statemachine which instructs the user to align the 
+ *	Calculation is achieved with a statemachine which instructs the user to align the
  *	imu to certain known orientations - to store the measured and the expected data.
  *	If every orientation is handled the resulting system is estimated by an least squares
  *	solver.
@@ -42,7 +42,7 @@ class CalibrationGenerator {
 
     /**
      * @brief Constructor
-	 * Initializes the zero position amplitudes of the sensors
+     * Initializes the zero position amplitudes of the sensors
      * @param[in] norm_amplitude_mag zero position amplitude of the magnetometer
      * @param[in] norm_amplitude_acc zero position amplitude of the accelerometer
      * @param[in] norm_amplitude_gyr zero position amplitude of the gyroscope
@@ -55,39 +55,39 @@ class CalibrationGenerator {
     virtual ~CalibrationGenerator();
 
     /**
-     * @brief Writes the calculated calibration data for the magnetometer to an calibration object. 
+     * @brief Writes the calculated calibration data for the magnetometer to an calibration object.
      * @param[in] cal The calibration object which shall store the data
      */
     void InitialiseCalibrationObjectMag(Sensor3DCalibration & cal);
 
     /**
-     * @brief Writes the calculated calibration data for the accelerometer to an calibration object. 
+     * @brief Writes the calculated calibration data for the accelerometer to an calibration object.
      * @param[in] cal The calibration object which shall store the data
      */
     void InitialiseCalibrationObjectAcc(Sensor3DCalibration & cal);
 
     /**
-     * @brief Writes the calculated calibration data for the gyroscope to an calibration object. 
+     * @brief Writes the calculated calibration data for the gyroscope to an calibration object.
      * @param[in] cal The calibration object which shall store the data
      */
     void InitialiseCalibrationObjectGyr(Sensor3DCalibration & cal);
 
 
 
-	arma::vec GetMagCentroid(ImuDataset & set);
-	arma::vec GetMagPlaneNormal(ImuDataset & set);
-	arma::vec GetAccVector(ImuDataset & set);
-	    /**
-	     * @brief calculates the calibration factors from a dataset containing rotations around all axes(sphere) 
-	     */
-	void CalculateMagnetometerCalibrationData(ImuDataset & set);
-	    /**
-	     * @brief calculates the calibration factors from six vectors describing the coordinate system
-	     */
-	void CalculateAccelerometerCalibrationData(arma::vec zp, arma::vec zn, arma::vec xp, arma::vec xn, arma::vec yp, arma::vec yn);
-	void CalculateGyrosocpeCalibrationData(ImuDataset & set);
+    arma::vec GetMagCentroid(ImuDataset & set);
+    arma::vec GetMagPlaneNormal(ImuDataset & set);
+    arma::vec GetAccVector(ImuDataset & set);
+    /**
+     * @brief calculates the calibration factors from a dataset containing rotations around all axes(sphere)
+     */
+    void CalculateMagnetometerCalibrationData(ImuDataset & set);
+    /**
+     * @brief calculates the calibration factors from six vectors describing the coordinate system
+     */
+    void CalculateAccelerometerCalibrationData(arma::vec zp, arma::vec zn, arma::vec xp, arma::vec xn, arma::vec yp, arma::vec yn);
+    void CalculateGyrosocpeCalibrationData(ImuDataset & set);
   private:
-  
+
     double DataScaleForCalculations;
 
 
